@@ -33,13 +33,12 @@ def find_rop_combinations(target_hex, initial_hex="0x0"):
     print(f"{'Type':<8} | {'Value A':<11} (Stat) | {'Value B':<11} (Stat)")
     print("=" * 78)
 
-    # --- SINGLE OPERAND SECTION ---
-    # Shows what happens if you apply the gadget to your CURRENT initial value
-    val_not_now = (~initial) & 0xFFFFFFFF
-    val_neg_now = (0x100000000 - initial) & 0xFFFFFFFF
-    print(f"{'NOT':<8} | {format_hex(initial):<11} (Init) | {format_hex(val_not_now):<11} (Result)")
-    print(f"{'NEG':<8} | {format_hex(initial):<11} (Init) | {format_hex(val_neg_now):<11} (Result)")
-    print("-" * 78)
+    # --- SINGLE OPERAND SECTION (The Fix) ---
+    pop_for_not = (~target) & 0xFFFFFFFF
+    pop_for_neg = (0x100000000 - target) & 0xFFFFFFFF
+    print(f"{'NOT':<8} | {format_hex(pop_for_not):<11} {check_safe(pop_for_not)} | {format_hex(target):<11} (Targeted)")
+    print(f"{'NEG':<8} | {format_hex(pop_for_neg):<11} {check_safe(pop_for_neg)} | {format_hex(target):<11} (Targeted)")
+    print("-" * 82)
 
     # --- XOR SECTION ---
     for base in bases:
