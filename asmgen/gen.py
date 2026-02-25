@@ -1,7 +1,7 @@
 import ctypes, struct, sys
 from keystone import *
 
-badchars = b"\x00\x02\x0A\x0D"
+badchars = b""
 
 CODE = ""
 with open(sys.argv[1]) as f:

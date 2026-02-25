@@ -1,4 +1,4 @@
-badchars = b"\x00\x02\x0A\x0D"
+badchars = b"\x00"
 
 start:                            
 #    int3;                             # Set bp in Windbg. REMOVE WHEN NOT DEBUGGING!

