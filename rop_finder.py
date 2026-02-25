@@ -6,7 +6,7 @@ import subprocess
 from typing import List, Dict, Optional
 
 # Registers for gadget hunting
-REGISTERS = ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"]
+REGISTERS = ["eax", "ebx", "ecx", "edx", "edi", "ebp", "esp", "esi"]
 
 
 def read_gadgets(file: str) -> List[str]:
@@ -43,15 +43,22 @@ def filter_calls_jumps(gadgets: List[str]) -> List[str]:
         "ja", "jae", "jb", "jbe", "jo", "jno", "js", "jns", "jp", "jnp",
         "jc", "jnc", "jecxz", "loop", "loope", "loopne"
     ]
-    return [
-        gadget for gadget in gadgets
-        if not any(op in gadget.split(":", 1)[1].lower() for op in call_jump_ops)
-    ]
+    output = []
+    for gadget in gadgets:
+        try:
+            lower = gadget.split(":", 1)[1].lower()
+            if not any(op in lower for op in call_jump_ops):
+                output.append(gadget)
+        except:
+            pass
+    return output
 
 
 def write_gadgets(filename: str, gadgets: List[str], header: str, 
                   image_base: str, aslr: Optional[int] = None, dll_name: Optional[str] = None) -> None:
     """Write gadgets to file in ascending length order (shortest first)."""
+    if len(gadgets) == 0:
+        return
     start = aslr or 0
     dll_name = dll_name or "dllbase"
     with open(filename, "a") as f:
@@ -61,9 +68,9 @@ def write_gadgets(filename: str, gadgets: List[str], header: str,
             if start:
                 addr = gadget.split(":")[0]
                 offset = f"{int(addr, 16) - int(image_base, 16):08x}"
-                f.write(f"{dll_name}+0x{offset}:{gadget[start+2:]}\n")
+                f.write(f"payload += pack(\"<L\", 0x{offset}) # {dll_name}+0x{offset}:{gadget[start+2:]}\n")
             else:
-                f.write(f"{gadget}\n")
+                f.write(f"payload += pack(\"<L\", {gadget.split(":")[0]}) # {gadget.split(":")[1]}\n")
         f.write("\n")
 
 
@@ -116,8 +123,8 @@ def simulate_gadget(gadget: str) -> Dict[str, str]:
             if dest in REGISTERS and src in REGISTERS:
                 registers[dest] = f"{dest}+{src}"
         elif op == "xchg" and len(parts) > 2:
-            reg1, reg2 = parts[1].rstrip(","), parts[2].rstrip(",")
-            if reg1 in REGISTERS and reg2 in REGISTERS:
+            reg1, reg2 = parts[1].rstrip(",").strip(), parts[2].rstrip(",").strip()
+            if reg1 in REGISTERS or reg2 in REGISTERS:
                 registers[reg1], registers[reg2] = registers[reg2], registers[reg1]
     
     return registers
@@ -164,6 +171,7 @@ def categorize_gadgets(gadgets: List[str]) -> Dict[str, List[str]]:
     
     regex_patterns = {
         "pop": lambda reg: rf'^0x[0-9a-fA-F]{{8}}:\s*pop\s+{reg}\s*;\s*ret',
+        "xchg": lambda reg: rf'^0x[0-9a-fA-F]{{8}}:\s*xchg\s+{reg}.*;\s*ret',
         "ropnops": r'^0x[0-9a-fA-F]{8}:\s*ret',
         "mem_read": lambda reg: rf'^0x[0-9a-fA-F]{{8}}:\s*mov\s+{reg}\s*,\s*(?:dword\s+)?\[[^]]+\]\s*;\s*ret',
         "mem_write": lambda reg: rf'^0x[0-9a-fA-F]{{8}}:\s*mov\s+(?:dword\s+)?\[[^]]+\],\s*{reg}\s*;\s*ret',
@@ -182,6 +190,7 @@ def categorize_gadgets(gadgets: List[str]) -> Dict[str, List[str]]:
     
     categories = {
         "pop": {},
+        "xchg": {},
         "stack_pivot": [],
         "ropnops": [],
         "null": {},
@@ -197,6 +206,7 @@ def categorize_gadgets(gadgets: List[str]) -> Dict[str, List[str]]:
     
     for reg in REGISTERS:
         categories["pop"][reg] = filter_gadgets(gadgets, regex_patterns["pop"](reg))
+        categories["xchg"][reg] = filter_gadgets(gadgets, regex_patterns["xchg"](reg))
         categories["mem_read"][reg] = filter_gadgets(gadgets, regex_patterns["mem_read"](reg))
         categories["mem_write"][reg] = filter_gadgets(gadgets, regex_patterns["mem_write"](reg))
         categories["add_val"][reg] = filter_gadgets(gadgets, regex_patterns["add_val"](reg))
@@ -232,6 +242,7 @@ def process_high(filename: str, gadgets: List[str], image_base: str,
     # Regex patterns for pure gadgets
     pure_patterns = {
         "pop": lambda reg: re.compile(rf'0x[0-9a-fA-F]{{8}}:\s*pop\s+{reg}\s*;\s*ret'),
+        "xchg": lambda reg: re.compile(rf'0x[0-9a-fA-F]{{8}}:\s*xchg\s+{reg}\s*;\s*ret'),
         "ropnops": re.compile(r'0x[0-9a-fA-F]{8}:\s*ret'),
         "inc": lambda reg: re.compile(rf'0x[0-9a-fA-F]{{8}}:\s*(inc)\s+{reg}\s*;\s*ret'),
         "dec": lambda reg: re.compile(rf'0x[0-9a-fA-F]{{8}}:\s*(dec)\s+{reg}\s*;\s*ret'),
@@ -253,6 +264,14 @@ def process_high(filename: str, gadgets: List[str], image_base: str,
             pure_gadget         = next((g for g in gadget_list if pure_patterns["pop"](reg).match(g)), None)
             gadgets_to_write    = [pure_gadget] if pure_gadget else gadget_list[:max_gadgets]
             write_gadgets(filename, gadgets_to_write, f"pop {reg}", image_base, aslr, dll_name)
+            remaining = [g for g in remaining if g not in gadgets_to_write]
+
+    if "xchg" in categories:
+        for reg in REGISTERS:
+            gadget_list         = categories["xchg"][reg]
+            pure_gadget         = next((g for g in gadget_list if pure_patterns["xchg"](reg).match(g)), None)
+            gadgets_to_write    = [pure_gadget] if pure_gadget else gadget_list[:max_gadgets]
+            write_gadgets(filename, gadgets_to_write, f"xchg {reg}", image_base, aslr, dll_name)
             remaining = [g for g in remaining if g not in gadgets_to_write]
 
     if "stack_pivot" in categories:
