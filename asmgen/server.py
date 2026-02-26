@@ -1,8 +1,8 @@
+# while($true) { Write-Host "[+] Launching Server..."; python .\server.py -Wait; Write-Host "[!] Server crashed or exited. Restarting in 1s..."; Start-Sleep -s 1 }
+
 import socket
 import ctypes
 import struct
-
-# while($true) { Write-Host "[+] Launching Server..."; python .\server.py -Wait; Write-Host "[!] Server crashed or exited. Restarting in 1s..."; Start-Sleep -s 1 }
 
 # Constants for Windows Memory
 MEM_COMMIT = 0x1000

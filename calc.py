@@ -11,7 +11,7 @@ def find_rop_combinations(target_hex, initial_hex="0x0"):
         return
 
     #\x00\x02\x0a\x0d\x25\x26\x3d
-    bad_chars = [0x00, 0x02, 0x0a, 0x0d, 0x25, 0x26, 0x3d]
+    bad_chars = [0x00]
 
     # Delta logic (handles 32-bit wrap-around)
     delta = (target - initial) & 0xFFFFFFFF
