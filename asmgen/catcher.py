@@ -12,7 +12,7 @@ def play_bing():
     # -X: exit after the tone
 
     # We use 'timeout' to ensure it doesn't hang the script
-    cmd = "timeout 0.5s speaker-test -t sine -f 1000 -l 1 > /dev/null 2>&1"
+    cmd = "timeout 1s speaker-test -t sine -f 500 -l 1 > /dev/null 2>&1"
 
     # Running this via sudo works because it hits the kernel-level driver
     subprocess.Popen(cmd, shell=True)
