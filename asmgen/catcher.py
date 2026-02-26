@@ -26,7 +26,7 @@ def start_listener(ip, port):
         try:
             s.bind((ip, port))
             s.listen(1)
-            print(f"[*] Listening on {ip}:{port} (ZSH/Kali)...")
+            print(f"[*] Listening on {ip}:{port} ...")
 
             conn, addr = s.accept()
             with conn:
