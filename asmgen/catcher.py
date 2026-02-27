@@ -29,16 +29,9 @@ def start_listener(ip, port):
             print(f"[*] Listening on {ip}:{port} ...")
 
             conn, addr = s.accept()
-            with conn:
-                print(f"\n[!] SHELL ACQUIRED from {addr[0]}:{addr[1]}")
-                play_bing()
-
-                # Basic interaction loop
-                while True:
-                    data = conn.recv(4096)
-                    if not data:
-                        break
-                    print(data.decode('utf-8', errors='ignore'), end='')
+            
+            print(f"\n[!] CONNECTION from {addr[0]}:{addr[1]}")
+            play_bing()
 
         except PermissionError:
             print("[-] Error: Use 'sudo' to bind to port 443.")
@@ -47,4 +40,5 @@ def start_listener(ip, port):
 
 if __name__ == "__main__":
     # 0.0.0.0 listens on all interfaces (ETH, VPN, Localhost)
-    start_listener('0.0.0.0', int(sys.argv[1]))
+    while True:
+        start_listener('0.0.0.0', int(sys.argv[1]))
